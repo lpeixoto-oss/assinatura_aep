@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gerador de Assinatura de Email — AEP</title>
+  <style>
+    html, body { margin:0; padding:0; background:#f0f2f5; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; color:#1a1f2e; min-height:100vh; }
+    * { box-sizing:border-box; }
+    #header { background:#003f7d; padding:18px 40px; display:flex; align-items:center; }
+    #header h1 { font-size:16px; font-weight:500; color:rgba(255,255,255,0.9); margin:0; letter-spacing:0.01em; }
+    #layout { display:grid; grid-template-columns:380px 1fr; gap:28px; max-width:1100px; margin:36px auto; padding:0 28px; }
+    .panel { background:#fff; border-radius:12px; border:1px solid #dde1e9; overflow:hidden; }
+    .panel-hdr { padding:16px 24px; border-bottom:1px solid #dde1e9; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#6b7280; }
+    .form-body { padding:24px; display:flex; flex-direction:column; gap:16px; }
+    .field { display:flex; flex-direction:column; gap:5px; }
+    .field label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#6b7280; }
+    .field input { font-family:inherit; font-size:14px; padding:9px 12px; border:1px solid #dde1e9; border-radius:8px; color:#1a1f2e; background:#fafbfc; outline:none; width:100%; }
+    .field input:focus { border-color:#003f7d; box-shadow:0 0 0 3px rgba(0,63,125,0.09); background:#fff; }
+    hr.div { border:none; border-top:1px solid #dde1e9; margin:4px 0; }
+    .preview-body { padding:32px; display:flex; flex-direction:column; gap:24px; }
+    .preview-lbl { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#6b7280; margin-bottom:12px; }
+    .sig-box { background:#fff; border:1px solid #dde1e9; border-radius:10px; padding:28px 32px; box-shadow:0 2px 8px rgba(0,0,0,0.04); }
+    #copy-btn { display:inline-flex; align-items:center; gap:8px; background:#003f7d; color:#fff; border:none; border-radius:9px; padding:12px 22px; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; }
+    #copy-btn:hover { background:#002f5e; }
+    #toast { display:none; align-items:center; gap:8px; background:#ecfdf5; border:1px solid #6ee7b7; color:#065f46; border-radius:8px; padding:10px 16px; font-size:13px; font-weight:500; margin-left:14px; }
+    #toast.show { display:inline-flex; }
+    .instr { background:#f0f6ff; border:1px solid #c7dcf8; border-radius:10px; padding:16px 22px; font-size:13px; color:#1e40af; line-height:1.75; }
+    .instr strong { display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:8px; }
+    .instr ol { padding-left:18px; margin:0; }
+    .instr ol li { margin-bottom:3px; }
+    @media(max-width:800px){ #layout{ grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+
+<div id="header">
+  <h1>AEP &nbsp;·&nbsp; Gerador de Assinatura de Email</h1>
+</div>
+
+<div id="layout">
+
+  <!-- FORMULÁRIO -->
+  <div class="panel">
+    <div class="panel-hdr">Dados do colaborador</div>
+    <div class="form-body">
+
+      <div class="field">
+        <label>Nome completo *</label>
+        <input type="text" id="f-nome" placeholder="ex: Ana Ferreira" oninput="update()"/>
+      </div>
+
+      <div class="field">
+        <label>Cargo <span style="font-weight:400;text-transform:none">(opcional)</span></label>
+        <input type="text" id="f-cargo" placeholder="ex: Responsável de Comunicação" oninput="update()"/>
+      </div>
+
+      <div class="field">
+        <label>Área / Departamento <span style="font-weight:400;text-transform:none">(opcional)</span></label>
+        <input type="text" id="f-area" placeholder="ex: Marketing e Comunicação" oninput="update()"/>
+      </div>
+
+      <hr class="div"/>
+
+      <div class="field">
+        <label>Telefone <span style="font-weight:400;text-transform:none">(opcional)</span></label>
+        <input type="text" id="f-tel" placeholder="ex: +351 227 000 000" oninput="update()"/>
+      </div>
+
+      <div class="field">
+        <label>Telemóvel <span style="font-weight:400;text-transform:none">(opcional)</span></label>
+        <input type="text" id="f-tlm" placeholder="ex: +351 910 000 000" oninput="update()"/>
+      </div>
+
+      <div class="field">
+        <label>Email *</label>
+        <input type="email" id="f-email" placeholder="ex: ana.ferreira@aeportugal.pt" oninput="update()"/>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PREVIEW -->
+  <div class="panel">
+    <div class="panel-hdr">Pré-visualização &amp; cópia</div>
+    <div class="preview-body">
+
+      <div>
+        <div class="preview-lbl">Assinatura</div>
+        <div class="sig-box" id="preview-box"></div>
+      </div>
+
+      <div style="display:flex;align-items:center;flex-wrap:wrap;">
+        <button id="copy-btn" onclick="copySignature()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copiar assinatura
+        </button>
+        <div id="toast">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Copiado! Cole diretamente no Outlook.
+        </div>
+      </div>
+
+      <div class="instr">
+        <strong>Como usar no Outlook</strong>
+        <ol>
+          <li>Clique em <em>Copiar assinatura</em> acima.</li>
+          <li>No Outlook, vá a <strong>Ficheiro → Opções → Correio → Assinaturas</strong>.</li>
+          <li>Crie ou edite uma assinatura e clique na área de texto.</li>
+          <li>Cole com <strong>Ctrl+V</strong>.</li>
+          <li>Guarde e defina como predefinição.</li>
+        </ol>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div id="sig-source" style="position:fixed;left:-9999px;top:0;opacity:0;pointer-events:none;"></div>
+
+<script>
+  var IMG_LOGO = 'https://www.aeportugal.com/files/MKT/images/logo_aep_assinatura.png';
+  var IMG_FB   = 'https://www.aeportugal.com/files/MKT/images/fb.png';
+  var IMG_LI   = 'https://www.aeportugal.com/files/MKT/images/ld.png';
+  var IMG_IG   = 'https://www.aeportugal.com/files/MKT/images/ig.png';
+  var IMG_YT   = 'https://www.aeportugal.com/files/MKT/images/yt.png';
+
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function buildSig(nome, cargo, area, tel, tlm, email) {
+    var subline = '';
+    if (cargo && area) subline = esc(cargo) + ' | ' + esc(area);
+    else if (cargo)    subline = esc(cargo);
+    else if (area)     subline = esc(area);
+
+    var rows = '';
+    if (subline) rows += '<tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#555555;padding:2px 0 5px;">' + subline + '</td></tr>';
+    if (tel)     rows += '<tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1f2e;padding:1px 0;">T: <a href="tel:' + esc(tel) + '" style="color:#1a1f2e;text-decoration:none;">' + esc(tel) + '</a></td></tr>';
+    if (tlm)     rows += '<tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1f2e;padding:1px 0;">M: <a href="tel:' + esc(tlm) + '" style="color:#1a1f2e;text-decoration:none;">' + esc(tlm) + '</a></td></tr>';
+    if (email)   rows += '<tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;padding:1px 0;"><a href="mailto:' + esc(email) + '" style="color:#e8500a;text-decoration:none;">' + esc(email) + '</a></td></tr>';
+
+    return '<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">'
+      + '<tr>'
+      + '<td style="padding-right:20px;vertical-align:middle;border-right:2px solid #dde1e9;">'
+      + '<img src="' + IMG_LOGO + '" alt="AEP" width="140" style="display:block;border:0;" />'
+      + '</td>'
+      + '<td style="padding-left:20px;vertical-align:top;">'
+      + '<table cellpadding="0" cellspacing="0" border="0">'
+      + '<tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#003f7d;padding-bottom:2px;">' + (esc(nome) || '&nbsp;') + '</td></tr>'
+      + rows
+      + '<tr><td style="padding-top:10px;">'
+      + '<table cellpadding="0" cellspacing="0" border="0"><tr>'
+      + '<td style="padding-right:5px;"><a href="https://www.facebook.com/aeportugal" target="_blank"><img src="' + IMG_FB + '" alt="Facebook" width="28" height="28" style="display:block;border:0;" /></a></td>'
+      + '<td style="padding-right:5px;"><a href="https://www.linkedin.com/company/aep-associacao-empresarial-de-portugal" target="_blank"><img src="' + IMG_LI + '" alt="LinkedIn" width="28" height="28" style="display:block;border:0;" /></a></td>'
+      + '<td style="padding-right:5px;"><a href="https://www.instagram.com/aep_portugal" target="_blank"><img src="' + IMG_IG + '" alt="Instagram" width="28" height="28" style="display:block;border:0;" /></a></td>'
+      + '<td><a href="https://www.youtube.com/@aeportugal" target="_blank"><img src="' + IMG_YT + '" alt="YouTube" width="28" height="28" style="display:block;border:0;" /></a></td>'
+      + '</tr></table>'
+      + '</td></tr>'
+      + '</table>'
+      + '</td>'
+      + '</tr>'
+      + '</table>';
+  }
+
+  function getFields() {
+    return {
+      nome:  document.getElementById('f-nome').value.trim(),
+      cargo: document.getElementById('f-cargo').value.trim(),
+      area:  document.getElementById('f-area').value.trim(),
+      tel:   document.getElementById('f-tel').value.trim(),
+      tlm:   document.getElementById('f-tlm').value.trim(),
+      email: document.getElementById('f-email').value.trim()
+    };
+  }
+
+  function update() {
+    var f = getFields();
+    var html = buildSig(f.nome, f.cargo, f.area, f.tel, f.tlm, f.email);
+    document.getElementById('preview-box').innerHTML = html;
+    document.getElementById('sig-source').innerHTML = html;
+  }
+
+  function copySignature() {
+    var f = getFields();
+    var html = buildSig(f.nome, f.cargo, f.area, f.tel, f.tlm, f.email);
+
+    function showToast() {
+      var t = document.getElementById('toast');
+      t.className = 'show';
+      setTimeout(function(){ t.className = ''; }, 3500);
+    }
+
+    if (navigator.clipboard && window.ClipboardItem) {
+      navigator.clipboard.write([
+        new ClipboardItem({
+          'text/html':  new Blob([html], { type: 'text/html' }),
+          'text/plain': new Blob([f.nome], { type: 'text/plain' })
+        })
+      ]).then(showToast).catch(function() { fallbackCopy(showToast); });
+    } else {
+      fallbackCopy(showToast);
+    }
+  }
+
+  function fallbackCopy(cb) {
+    var el = document.getElementById('sig-source');
+    var range = document.createRange();
+    range.selectNodeContents(el);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    try { document.execCommand('copy'); } catch(e) {}
+    sel.removeAllRanges();
+    if (cb) cb();
+  }
+
+  update();
+</script>
+</body>
+</html>
